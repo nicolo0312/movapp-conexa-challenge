@@ -2,11 +2,15 @@ version: '3.8'
 
 services:
   db:
-    image: mysql:8.3.0
+    image: mysql:5.7
     ports:
-      - "3307:3307"
+      - "3307:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: my_root_password
+      MYSQL_ROOT_PASSWORD: r00t_p4ssw0rd
       MYSQL_DATABASE: movapp
     volumes:
       - ./db:/docker-entrypoint-initdb.d
+      - mysql:/var/lib/mysql
+    
+volumes:
+  mysql:
