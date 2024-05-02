@@ -12,14 +12,4 @@ export class LoginUserDto {
         message: 'The password must have a Uppercase, lowercase letter and a number'
     })
     password: string;
-
-    @IsString()
-    @MinLength(3)
-    @MaxLength(20)
-    firstname: string;
-
-    @IsString()
-    @MinLength(2)
-    @MaxLength(25)
-    lastname: string; 
 }
