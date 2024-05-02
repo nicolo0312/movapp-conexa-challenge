@@ -13,10 +13,16 @@ export class Movie {
     @Column('text')
     description: string;
 
+    @Column({
+        type: 'timestamp',
+        nullable:true
+    })
+    releaseDate:Date;
+
     @Column('int',{
         nullable:true
     })
-    yearReleased:number;
+    runtime:number;
 
     @Column('text',{
         nullable:true
@@ -44,7 +50,7 @@ export class Movie {
 
     @AfterInsert()
     insertFlatten(){
-        this.flatten = `${this.title} ${this.genre} ${this.yearReleased.toString()}`
+        this.flatten = `${this.title} ${this.genre}`
     }
 
     @AfterUpdate()

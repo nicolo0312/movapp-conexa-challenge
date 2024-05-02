@@ -7,20 +7,33 @@ import { Movie } from './entities/movie.entity';
 import { ILike, Like, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationAndSearchDto } from 'src/common/dtos/pagination-and-search.dto';
+import { CreateMovieFromApiDto } from './dto/create-movie-from-api.dto';
 
 @Injectable()
 export class MoviesService {
-  private readonly logger = new Logger('MoviesService')
+  private readonly logger = new Logger('MoviesService');
+  private readonly movieDBApiBaseUrl = process.env.MOVIE_DB_API_BASE_URL;
+  private readonly mobieDBApiKey = process.env.MOVIE_DB_API_KEY;
+
   constructor(
     private readonly httpService: HttpService,
     @InjectRepository(Movie)
     private readonly movieRepository: Repository<Movie>
   ) {}
-  async create(createMovieDto: CreateMovieDto) {
 
-    const movie = this.movieRepository.create(createMovieDto)
-    await this.movieRepository.save(movie)
-    return 'Movie was created';
+
+  async create(createMovieDto: CreateMovieDto) {
+    try {
+      const movie = this.movieRepository.create(createMovieDto)
+      const movieCreated = await this.movieRepository.save(movie)
+      return {
+        data:movieCreated,
+        message:'Movie was created'
+      };
+      
+    } catch (error) {
+      throw new InternalServerErrorException(error)
+    }
   }
 
   async findAll(paginationAndSearchDto: PaginationAndSearchDto) {
@@ -45,7 +58,7 @@ export class MoviesService {
       }
       return response;
     } catch (error) {
-      throw new BadRequestException('Movie not found')
+      throw new InternalServerErrorException(error)
     }
   }
 
@@ -58,7 +71,7 @@ export class MoviesService {
 
       return movie;
     } catch (error) {
-      throw new BadRequestException('Movie not found')
+      throw new InternalServerErrorException(error)
     }
   }
 
@@ -74,22 +87,35 @@ export class MoviesService {
   
       const movieUpdated = await this.movieRepository.save(movieToUpdate)
   
-      return {data:movieUpdated};
+      return {
+        data:movieUpdated,
+        message:'Movie was updated'
+      };
     } catch (error) {
-      
+      throw new InternalServerErrorException(error)
     }
   }
 
   async remove(id: string) {
     try {
-      
-      const movieToDelete = await this.movieRepository.findOne({where:{id}});
+      const bodyUpdate = {
+        isActive: false,
+        deletedAt: new Date()
+      }
+      const movieToDelete = await this.movieRepository.preload({
+        id,
+        ...bodyUpdate
+      });
       if (!movieToDelete) {
         throw new NotFoundException(`Movie with id ${id} not found`);
       }
-      movieToDelete.deletedAt = new Date()
-      movieToDelete.isActive  = false 
-      return `This movie was deleted`;
+
+
+      const movieDeleted = await this.movieRepository.save(movieToDelete)
+      return {
+        data:movieDeleted,
+        message:`This movie was deleted`
+      };
     } catch (error) {
       this.logger.error(error)
     }
@@ -123,6 +149,49 @@ export class MoviesService {
   } catch (error) {
     throw new InternalServerErrorException(error)
   }
+  }
+
+  async getApiMoviesByTitle(paginationAndSearchDto: PaginationAndSearchDto){
+    try {
+      const {search} = paginationAndSearchDto;
+      const {data} = await firstValueFrom(
+        this.httpService.get(`${this.movieDBApiBaseUrl}/search/movie?query=${search}&api_key=${this.mobieDBApiKey}`)
+      )
+      if(!data)
+        throw new BadRequestException('Movie DB API has Server Error')
+
+      return data.results
+    } catch (error) {
+      throw new InternalServerErrorException(error)
+    }
+
+  }
+
+  async addMovieFromApi(createMovieFromApi: CreateMovieFromApiDto){
+    try {
+      const {idMovie} = createMovieFromApi
+      const {data} = await firstValueFrom(
+        this.httpService.get(`${this.movieDBApiBaseUrl}/movie/${idMovie}?api_key=${this.mobieDBApiKey}&language=es-ES`)
+      )
+      let genresMovie: string = ''
+      data.genres.forEach(async ({name}) => {
+        genresMovie += ` ${name},`;
+      });
+
+      const createMovie:CreateMovieDto={
+        title:data.title,
+        description:data.overview,
+        releaseDate:data.release_date,
+        runtime:data.runtime,
+        genre:genresMovie,
+      }
+
+      const movieCreated = await this.create(createMovie)
+
+      return movieCreated
+    } catch (error) {
+      throw new InternalServerErrorException(error)
+    }
   }
 
 }
