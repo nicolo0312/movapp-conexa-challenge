@@ -13,7 +13,7 @@ import { CreateMovieFromApiDto } from './dto/create-movie-from-api.dto';
 export class MoviesService {
   private readonly logger = new Logger('MoviesService');
   private readonly movieDBApiBaseUrl = process.env.MOVIE_DB_API_BASE_URL;
-  private readonly mobieDBApiKey = process.env.MOVIE_DB_API_KEY;
+  private readonly movieDBApiKey = process.env.MOVIE_DB_API_KEY;
 
   constructor(
     private readonly httpService: HttpService,
@@ -39,23 +39,18 @@ export class MoviesService {
   async findAll(paginationAndSearchDto: PaginationAndSearchDto) {
     try {    
       const {limit = 10, offset = 0, search} = paginationAndSearchDto
-      let response:Movie[];
-      if(search){
-        response = await this.movieRepository.find({
-          where:{
-            isActive:true,
-            flatten:ILike(`%${search}%`)},
-          take:limit,
-          skip:offset
-        })
-      }else{
-        response = await this.movieRepository.find({
-          where:{isActive:true},
-          take:limit,
-          skip:offset
-        })
 
+      const whereParamMovie = {
+        where:{
+          isActive:true,
+        take:limit,
+        skip:offset
       }
+    }
+      if(search)
+        whereParamMovie.where['flatten'] = ILike(`%${search}%`)
+
+      const response:Movie[]= await this.movieRepository.find(whereParamMovie)
       return response;
     } catch (error) {
       throw new InternalServerErrorException(error)
@@ -155,7 +150,7 @@ export class MoviesService {
     try {
       const {search} = paginationAndSearchDto;
       const {data} = await firstValueFrom(
-        this.httpService.get(`${this.movieDBApiBaseUrl}/search/movie?query=${search}&api_key=${this.mobieDBApiKey}`)
+        this.httpService.get(`${this.movieDBApiBaseUrl}/search/movie?query=${search}&api_key=${this.movieDBApiKey}`)
       )
       if(!data)
         throw new BadRequestException('Movie DB API has Server Error')
@@ -171,7 +166,7 @@ export class MoviesService {
     try {
       const {idMovie} = createMovieFromApi
       const {data} = await firstValueFrom(
-        this.httpService.get(`${this.movieDBApiBaseUrl}/movie/${idMovie}?api_key=${this.mobieDBApiKey}&language=es-ES`)
+        this.httpService.get(`${this.movieDBApiBaseUrl}/movie/${idMovie}?api_key=${this.movieDBApiKey}&language=es-ES`)
       )
       let genresMovie: string = ''
       data.genres.forEach(async ({name}) => {

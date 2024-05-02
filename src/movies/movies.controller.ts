@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query } from '@nestjs/common';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { MoviesService } from './movies.service';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
@@ -6,12 +7,23 @@ import { Auth } from 'src/auth/decorators/auth.decorated';
 import { ValidRoles } from 'src/auth/interfaces/valid-roles';
 import { PaginationAndSearchDto } from 'src/common/dtos/pagination-and-search.dto';
 import { CreateMovieFromApiDto } from './dto/create-movie-from-api.dto';
+import { Movie } from './entities/movie.entity';
 
+@ApiTags('Movies')
 @Controller('movies')
 export class MoviesController {
   constructor(private readonly moviesService: MoviesService) {}
 
   
+  @Post()
+  @Auth(ValidRoles.administrator)
+  @ApiResponse({status:201, description:'Movie was created', type: Movie})
+  @ApiResponse({status:400, description:'Bad request'})
+  @ApiResponse({status:403, description:'Forbidden. Invalid token'})
+  create(@Body() createMovieDto: CreateMovieDto) {
+    return this.moviesService.create(createMovieDto);
+  }
+
   @Post('starWars')
   @Auth(ValidRoles.administrator)
   insertStarWarsMovies() {
@@ -22,11 +34,6 @@ export class MoviesController {
   @Auth(ValidRoles.regular)
   addMovieFromApi(@Body() createMovieFromApi: CreateMovieFromApiDto) {
     return this.moviesService.addMovieFromApi(createMovieFromApi)
-  }
-  @Post()
-  @Auth(ValidRoles.administrator)
-  create(@Body() createMovieDto: CreateMovieDto) {
-    return this.moviesService.create(createMovieDto);
   }
 
   @Get()
