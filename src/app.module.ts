@@ -4,7 +4,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { MoviesModule } from './movies/movies.module';
 import { AuthModule } from './auth/auth.module';
-import { SeedModule } from './seed/seed.module';
 import { CommonModule } from './common/common.module';
 @Module({
   imports: [
@@ -22,7 +21,6 @@ import { CommonModule } from './common/common.module';
     UsersModule,
     MoviesModule,
     AuthModule,
-    SeedModule,
     CommonModule
   ],
   controllers: [],
