@@ -157,7 +157,6 @@ export class MoviesService {
         data:data.results,
         message:''
       };
-      return data.results;
     
   } catch (error) {
     throw new InternalServerErrorException(error)

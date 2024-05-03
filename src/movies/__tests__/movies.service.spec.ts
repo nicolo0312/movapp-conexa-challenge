@@ -4,12 +4,11 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Movie } from '../entities/movie.entity';
 import { HttpService } from '@nestjs/axios';
-import { BadRequestException, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { firstValueFrom, of } from 'rxjs';
+import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { of } from 'rxjs';
 import { PaginationAndSearchDto } from 'src/common/dtos/pagination-and-search.dto';
 import { CreateMovieDto } from 'src/movies/dto/create-movie.dto';
 import { UpdateMovieDto } from 'src/movies/dto/update-movie.dto';
-import { CreateMovieFromApiDto } from 'src/movies/dto/create-movie-from-api.dto';
 import { AxiosResponse } from 'axios';
 import { ErrorHandler } from '../../utils/error-handler';
 
