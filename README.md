@@ -13,7 +13,7 @@
 3. Clonar el archivo ```.env.example``` y renombrarlo a ```.env```
 4. Pararse en la raiz del proyecto y levantar base de datos : ```docker-compose up -d```
 5. Pararse en la raiz del proyecto y correr el comando: ```yarn start:dev```
-6. Correr seed: ```http://localhost:3000/seed```
+6. Correr seed: ```http://localhost:3000/api/seed```
 
 # Consideraciones:
 1. El seed del paso número 6 anterior crea un usuario con rol administrador. El email y la password se encuentran en .env.
