@@ -6,6 +6,6 @@ export class ErrorHandler {
       throw new BadRequestException('Resource already exists');
     }
 
-    throw new InternalServerErrorException('Please check server logs');
+    throw new InternalServerErrorException('Please try again later');
   }
 }

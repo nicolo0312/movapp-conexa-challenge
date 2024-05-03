@@ -19,5 +19,6 @@
 1. El seed del paso número 6 anterior crea un usuario con rol administrador. El email y la password se encuentran en .env.
 2. Para ver la documentación del proyecto : ```http://localhost:3000/api```
 3. Para correr los test ejecutar en la terminal : ```yarn test```
+4. Despues del login insertar token en Bearer Token
 
 

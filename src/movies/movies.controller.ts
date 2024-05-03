@@ -17,7 +17,8 @@ import { MovieDBResponse } from './responseExamples/movieDb-response';
 @Controller('movies')
 export class MoviesController {
   constructor(private readonly moviesService: MoviesService) {}
-
+  
+  
   
   @Post()
   @Auth(ValidRoles.administrator)
@@ -28,7 +29,6 @@ export class MoviesController {
   create(@Body() createMovieDto: CreateMovieDto) {
     return this.moviesService.create(createMovieDto);
   }
-
   @Post('starWars')
   @Auth(ValidRoles.administrator)
   @ApiResponse({status:201, description:'Movie was created', type: Movie})
@@ -48,7 +48,7 @@ export class MoviesController {
   addMovieFromApi(@Body() createMovieFromApi: CreateMovieFromApiDto) {
     return this.moviesService.addMovieFromApi(createMovieFromApi)
   }
-
+  
   @Get()
   @Auth()
   @ApiResponse({status:200, description:'List of movies create in our database', type: Movie, isArray:true})
@@ -57,7 +57,7 @@ export class MoviesController {
   findAll(@Query() paginationAndSearchDto: PaginationAndSearchDto) {
     return this.moviesService.findAll(paginationAndSearchDto);
   }
-
+  
   @Get('starWars')
   @Auth(ValidRoles.administrator)
   @ApiResponse({
@@ -68,11 +68,11 @@ export class MoviesController {
       type:'array',
       example:SwapiResponse
     }})
-  @ApiResponse({status:401, description:'Unauthorized'})
-  @ApiResponse({status:403, description:'Forbidden. Invalid token'})
-  getStarWarsMovies() {
-    return this.moviesService.starWarsMovies();
-  }
+    @ApiResponse({status:401, description:'Unauthorized'})
+    @ApiResponse({status:403, description:'Forbidden. Invalid token'})
+    getStarWarsMovies() {
+      return this.moviesService.starWarsMovies();
+    }
   
   @Get('apiMoviesByTitle')
   @Auth(ValidRoles.administrator)
@@ -90,7 +90,7 @@ export class MoviesController {
   getApiMoviesByTitle(@Query() paginationAndSearchDto: PaginationAndSearchDto){
     return this.moviesService.getApiMoviesByTitle(paginationAndSearchDto)
   }
-
+  
   @Get(':id')
   @Auth(ValidRoles.regular)
   @ApiResponse({status:200, description:'Movie created on our database, we must provide id movie ', type:Movie})
@@ -100,8 +100,8 @@ export class MoviesController {
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.moviesService.findOne(id);
   }
-
-
+  
+  
   @Patch(':id')
   @Auth(ValidRoles.administrator)
   @ApiResponse({status:200, description:'Movie was updated, we must provide id movie ', type:Movie})
@@ -111,7 +111,7 @@ export class MoviesController {
   update(@Param('id', ParseUUIDPipe) id: string, @Body() updateMovieDto: UpdateMovieDto) {
     return this.moviesService.update(id, updateMovieDto);
   }
-
+  
   @Delete(':id')
   @Auth(ValidRoles.administrator)
   @ApiResponse({status:200, description:'Movie was eliminated, we must provide id movie '})

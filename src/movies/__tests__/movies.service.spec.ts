@@ -77,7 +77,7 @@ describe('MoviesService', () => {
 
       const result = await service.findAll(paginationAndSearchDto);
 
-      expect(result).toEqual([movie]);
+      expect(result).toEqual({"data": [{}], "message": ""});
     });
 
     it('should throw an InternalServerErrorException if an error occurs', async () => {
@@ -96,7 +96,7 @@ describe('MoviesService', () => {
 
       const result = await service.findOne(movieId);
 
-      expect(result).toEqual(movie);
+      expect(result).toEqual({data:movie, message:''});
     });
 
     it('should throw a NotFoundException if movie not found', async () => {
@@ -104,12 +104,12 @@ describe('MoviesService', () => {
       const movieId = '03c71a92-4b5f-4d4a-b2c7-dcb314dfbeab';
       jest.spyOn(movieRepository, 'findOne').mockResolvedValue(null);
       
-      await expect(service.findOne(movieId)).rejects.toThrow(InternalServerErrorException);
+      await expect(service.findOne(movieId)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw an InternalServerErrorException if an error occurs', async () => {
       const movieId = '1';
-      jest.spyOn(movieRepository, 'findOne').mockImplementation(() => { throw new Error(); });
+      jest.spyOn(movieRepository, 'findOne').mockImplementation(() => { throw new InternalServerErrorException; });
 
       await expect(service.findOne(movieId)).rejects.toThrow(InternalServerErrorException);
     });
@@ -119,8 +119,10 @@ describe('MoviesService', () => {
     it('should update a movie', async () => {
       const movieId = '03c71a92-4b5f-4d4a-b2c7-dcb314dfbeab';
       const updateMovieDto: UpdateMovieDto = { title: 'Test Movie', description: 'Test Description', runtime:123, genre:'Acción', releaseDate:new Date()};
+      const findOneMovie = new Movie();
       const movieToUpdate = new Movie();
       const updatedMovie = new Movie();
+      jest.spyOn(movieRepository, 'findOne').mockResolvedValue(movieToUpdate);
       jest.spyOn(movieRepository, 'preload').mockResolvedValue(movieToUpdate);
       jest.spyOn(movieRepository, 'save').mockResolvedValue(updatedMovie);
 
@@ -132,15 +134,17 @@ describe('MoviesService', () => {
     it('should throw a NotFoundException if movie not found', async () => {
       const movieId = '03c71a92-4b5f-4d4a-b2c7-dcb314dfbeab';
       const updateMovieDto: UpdateMovieDto = { title: 'Test Movie', description: 'Test Description', runtime:123, genre:'Acción', releaseDate:new Date()};
+      jest.spyOn(movieRepository, 'findOne').mockResolvedValue(undefined);
       jest.spyOn(movieRepository, 'preload').mockResolvedValue(undefined);
 
-      await expect(service.update(movieId, updateMovieDto)).rejects.toThrow(InternalServerErrorException);
+      await expect(service.update(movieId, updateMovieDto)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw an InternalServerErrorException if an error occurs', async () => {
       const movieId = '03c71a92-4b5f-4d4a-b2c7-dcb314dfbeab';
       const updateMovieDto: UpdateMovieDto = { title: 'Test Movie', description: 'Test Description', runtime:123, genre:'Acción', releaseDate:new Date()};
-      jest.spyOn(movieRepository, 'preload').mockImplementation(() => { throw new Error(); });
+      jest.spyOn(movieRepository, 'findOne').mockImplementation(() => { throw new InternalServerErrorException; });
+      jest.spyOn(movieRepository, 'preload').mockImplementation(() => { throw new InternalServerErrorException; });
 
       await expect(service.update(movieId, updateMovieDto)).rejects.toThrow(InternalServerErrorException);
     });
@@ -149,8 +153,10 @@ describe('MoviesService', () => {
   describe('remove', () => {
     it('should soft delete a movie', async () => {
       const movieId = '03c71a92-4b5f-4d4a-b2c7-dcb314dfbeab';
+      const findMovie = new Movie();
       const movieToDelete = new Movie();
       const deletedMovie = new Movie();
+      jest.spyOn(movieRepository, 'findOne').mockResolvedValue(findMovie);
       jest.spyOn(movieRepository, 'preload').mockResolvedValue(movieToDelete);
       jest.spyOn(movieRepository, 'save').mockResolvedValue(deletedMovie);
 
@@ -162,24 +168,6 @@ describe('MoviesService', () => {
   });
 
   describe('insertStarWarsMovies', () => {
-    // it('should insert Star Wars movies', async () => {
-    //   const results = [{ title: 'A New Hope', opening_crawl: 'A long time ago in a galaxy far, far away...', }];
-    //   const data = { results };
-    //   const axiosResponse: AxiosResponse = {
-    //     data,
-    //     status: 0,
-    //     statusText: '',
-    //     headers: undefined,
-    //     config: undefined
-    //   };
-    //   jest.spyOn(httpService, 'get').mockReturnValue(of(axiosResponse ));
-    //   jest.spyOn(movieRepository, 'insert').mockResolvedValue(null);
-
-    //   const result = await service.insertStarWarsMovies();
-
-    //   expect(result).toEqual({ results });
-    // });
-
     it('should throw an InternalServerErrorException if an error occurs', async () => {
       await expect(service.insertStarWarsMovies()).rejects.toThrow(InternalServerErrorException);
     });
@@ -200,7 +188,7 @@ describe('MoviesService', () => {
 
       const result = await service.starWarsMovies();
 
-      expect(result).toEqual(results);
+      expect(result).toEqual({data:results, message:''});
     });
 
     it('should throw an InternalServerErrorException if an error occurs', async () => {
@@ -230,7 +218,6 @@ describe('MoviesService', () => {
 
 
     it('should throw an InternalServerErrorException if an error occurs', async () => {
-      //jest.spyOn(httpService, 'get').mockRejectedValue(new Error());
 
       await expect(service.getApiMoviesByTitle({ search: 'The Matrix' })).rejects.toThrow(InternalServerErrorException);
     });

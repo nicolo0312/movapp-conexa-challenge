@@ -25,8 +25,8 @@ export class UsersService {
       });
       await this.userRepository.save( user )
       delete user.password
-      return user;
-    } catch (error) {
+      return {data:user, message:'User was created'};
+    }catch (error) {
       this.errorHandler.handleDBErrors(error);
     }
   }

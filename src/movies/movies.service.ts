@@ -2,17 +2,17 @@ import { BadRequestException, Injectable, InternalServerErrorException, Logger, 
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom } from 'rxjs';
 import { Movie } from './entities/movie.entity';
-import { ILike, Like, Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationAndSearchDto } from 'src/common/dtos/pagination-and-search.dto';
 import { CreateMovieFromApiDto } from './dto/create-movie-from-api.dto';
 import { ErrorHandler } from '../utils/error-handler';
+import { AxiosError } from 'axios';
 
 @Injectable()
 export class MoviesService {
-  private readonly logger = new Logger('MoviesService');
   private readonly movieDBApiBaseUrl = process.env.MOVIE_DB_API_BASE_URL;
   private readonly movieDBApiKey = process.env.MOVIE_DB_API_KEY;
 
@@ -26,6 +26,7 @@ export class MoviesService {
 
   async create(createMovieDto: CreateMovieDto) {
     try {
+
       const movie = this.movieRepository.create(createMovieDto)
       const movieCreated = await this.movieRepository.save(movie)
       return {
@@ -45,42 +46,48 @@ export class MoviesService {
       const whereParamMovie = {
         where:{
           isActive:true,
+        },
         take:limit,
         skip:offset
-      }
     }
       if(search)
         whereParamMovie.where['flatten'] = ILike(`%${search}%`)
 
       const response:Movie[]= await this.movieRepository.find(whereParamMovie)
-      return response;
+      return {
+        data:response,
+        message:''
+      };
     } catch (error) {
       throw new InternalServerErrorException(error)
     }
   }
 
   async findOne(id: string) {
-    try {
       const movie = await this.movieRepository.findOne({ where: { id, isActive: true } });
       if (!movie) {
         throw new NotFoundException(`Movie with id ${id} not found`);
       }
-      return movie;
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+      return {
+        data:movie,
+        message:''
+      };
   }
 
   async update(id: string, updateMovieDto: UpdateMovieDto) {
     try {
-      const movieToUpdate = await this.movieRepository.preload({
-        id:id,
-        ...updateMovieDto
-      });
-      if (!movieToUpdate) {
+      
+      const movieExists:Movie= await this.movieRepository.findOne({where:{id, isActive:true}});
+      if(!movieExists){
         throw new NotFoundException(`Movie with id ${id} not found`);
       }
-  
+        
+        const movieToUpdate = await this.movieRepository.preload({
+          id:id,
+          ...updateMovieDto
+        });
+        
+
       const movieUpdated = await this.movieRepository.save(movieToUpdate)
   
       return {
@@ -88,6 +95,8 @@ export class MoviesService {
         message:'Movie was updated'
       };
     } catch (error) {
+      if(error.status===404) throw new NotFoundException(error.response.message)
+
       this.errorHandler.handleDBErrors(error)
     }
   }
@@ -98,22 +107,22 @@ export class MoviesService {
         isActive: false,
         deletedAt: new Date()
       }
+      const movieExists = await this.movieRepository.findOne({where:{id, isActive:true}})
+      if(!movieExists)
+        throw new NotFoundException(`Movie with id ${id} not found`);
+    
       const movieToDelete = await this.movieRepository.preload({
         id,
         ...bodyUpdate
       });
-      if (!movieToDelete) {
-        throw new NotFoundException(`Movie with id ${id} not found`);
-      }
-
-
+    
       const movieDeleted = await this.movieRepository.save(movieToDelete)
       return {
         data:movieDeleted,
         message:`This movie was deleted`
       };
     } catch (error) {
-      this.logger.error(error)
+      throw new InternalServerErrorException(error)
     }
   }
   
@@ -125,10 +134,14 @@ export class MoviesService {
       const insertPromises = []
       data.results.forEach(async ({title, opening_crawl}) => {
         let completeTitle = `Star Wars - ${title}`
-        insertPromises.push(this.movieRepository.insert({title:completeTitle, description:opening_crawl}))
+        let genreCreate = 'Ciencia ficción'
+        let flattenCreate = completeTitle + ' ' + genreCreate
+        insertPromises.push(this.movieRepository.insert({title:completeTitle, description:opening_crawl, genre:genreCreate, flatten: flattenCreate}))
       });
       const results = await Promise.all(insertPromises)
-      return {results};
+      return {
+        data:results,
+        message:''};
     
   } catch (error) {
     this.errorHandler.handleDBErrors(error)
@@ -140,6 +153,10 @@ export class MoviesService {
       const {data} = await firstValueFrom(
         this.httpService.get(process.env.STAR_WARS_API_URL)
       )
+      return {
+        data:data.results,
+        message:''
+      };
       return data.results;
     
   } catch (error) {
@@ -167,8 +184,12 @@ export class MoviesService {
     try {
       const {idMovie} = createMovieFromApi
       const {data} = await firstValueFrom(
-        this.httpService.get(`${this.movieDBApiBaseUrl}/movie/${idMovie}?api_key=${this.movieDBApiKey}&language=es-ES`)
-      )
+        this.httpService.get(`${this.movieDBApiBaseUrl}/movie/${idMovie}?api_key=${this.movieDBApiKey}&language=es-ES`).pipe(
+          catchError((error: AxiosError) => {
+            throw (error.response.data);
+          }),
+        ),
+      );
       let genresMovie: string = ''
       data.genres.forEach(async ({name}) => {
         genresMovie += ` ${name},`;
@@ -182,11 +203,21 @@ export class MoviesService {
         genre:genresMovie,
       }
 
-      const movieCreated = await this.create(createMovie)
+      let movieCreated = await this.movieRepository.create(createMovie)
+      movieCreated = await this.movieRepository.save(movieCreated)
 
-      return movieCreated
+      return {
+        data:movieCreated,
+        message:'Movie was created'
+      };
     } catch (error) {
-      this.errorHandler.handleDBErrors(error)
+      if(!error.success)
+        return {
+          message:'External API failed',
+          error:'Bad request error',
+          statusCode:400
+        }
+      throw this.errorHandler.handleDBErrors(error)
     }
   }
 

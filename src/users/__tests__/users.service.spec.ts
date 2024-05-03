@@ -51,7 +51,7 @@ describe('UsersService', () => {
 
       const result = await service.create(createUserDto);
 
-      expect(result).toEqual({ firstname: createUserDto.firstname, email: createUserDto.email });
+      expect(result).toEqual({data:{ firstname: createUserDto.firstname, email: createUserDto.email}, message:'User was created' });
     });
 
     it('should throw a BadRequestException if a duplicate entry error occurs', async () => {

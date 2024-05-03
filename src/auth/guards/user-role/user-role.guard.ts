@@ -18,11 +18,11 @@ export class UserRoleGuard implements CanActivate {
     const validRoles: string = this.reflector.get(META_ROLES, context.getHandler())
     if(!validRoles) return true;
     if(validRoles.length === 0) return true;
+    
 
     if(!user)
       throw new InternalServerErrorException('User not found');
 
-    
     
     if(validRoles[0].toLowerCase() === user.role.toLowerCase()) return true;
     

@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
 import { IsDate, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class CreateMovieDto {
@@ -21,6 +22,7 @@ export class CreateMovieDto {
     })
     @IsOptional()
     @IsNumber()
+    @Transform(({ value }) => parseInt(value))
     runtime:number;
 
     @ApiProperty({
@@ -34,6 +36,7 @@ export class CreateMovieDto {
     })
     @IsDate()
     @IsOptional()
+    @Transform(({ value }) => new Date(value))
     releaseDate:Date;
 
 }
