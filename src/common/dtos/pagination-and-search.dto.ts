@@ -5,7 +5,8 @@ import { IsOptional, IsPositive, Min } from "class-validator";
 export class PaginationAndSearchDto{
     @ApiProperty({
         default:10,
-        description: 'How many rows do you need'
+        description: 'How many rows do you need',
+        required:false
     })
     @IsOptional()
     @IsPositive()
@@ -14,7 +15,8 @@ export class PaginationAndSearchDto{
 
     @ApiProperty({
         default:0,
-        description:'How many rows do you want to skip'
+        description:'How many rows do you want to skip',
+        required:false
     })
     @IsOptional()
     @Min(0)
@@ -22,7 +24,8 @@ export class PaginationAndSearchDto{
     offset?:number;
 
     @ApiProperty({
-        description: "The search value is used to search by title both in the database and in the MovieDB API"
+        description: "The search value is used to search by title both in the database and in the MovieDB API",
+        required:false
     })
     @IsOptional()
     search?:string;

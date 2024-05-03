@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
-import { ValidRoles } from "src/auth/interfaces/valid-roles";
+import { ValidRoles } from "../../auth/interfaces/valid-roles";
 
 @Entity('users')
 export class User {
