@@ -9,7 +9,6 @@ services:
       MYSQL_ROOT_PASSWORD: r00t_p4ssw0rd
       MYSQL_DATABASE: movapp
     volumes:
-      - ./db:/docker-entrypoint-initdb.d
       - mysql:/var/lib/mysql
     
 volumes:

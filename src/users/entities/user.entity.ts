@@ -1,13 +1,22 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { ValidRoles } from "src/auth/interfaces/valid-roles";
 
 @Entity('users')
 export class User {
-    @ApiProperty()
+    @ApiProperty({
+        example:"7c65cc7e-2c7a-424d-9cec-81cf334672fd",
+        description: "User ID",
+        uniqueItems:true
+    })
     @PrimaryGeneratedColumn('uuid')
     id: string; 
 
-    @ApiProperty()
+    @ApiProperty({
+        example:"nicolas.moran@gmail.com",
+        description: "User Email",
+        uniqueItems:true
+    })
     @Column({
         length:'60',
         unique: true,
@@ -36,9 +45,9 @@ export class User {
 
     @ApiProperty()
     @Column({
-        type: 'varchar', 
-        length: 50, 
-        default: 'Regular' 
+        type: 'enum',
+        enum: ValidRoles, 
+        default: ValidRoles.regular 
     })
     role: string;
 

@@ -8,6 +8,7 @@ import { ILike, Like, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationAndSearchDto } from 'src/common/dtos/pagination-and-search.dto';
 import { CreateMovieFromApiDto } from './dto/create-movie-from-api.dto';
+import { ErrorHandler } from '../utils/error-handler';
 
 @Injectable()
 export class MoviesService {
@@ -18,7 +19,8 @@ export class MoviesService {
   constructor(
     private readonly httpService: HttpService,
     @InjectRepository(Movie)
-    private readonly movieRepository: Repository<Movie>
+    private readonly movieRepository: Repository<Movie>,
+    private readonly errorHandler: ErrorHandler
   ) {}
 
 
@@ -32,7 +34,7 @@ export class MoviesService {
       };
       
     } catch (error) {
-      throw new InternalServerErrorException(error)
+      this.errorHandler.handleDBErrors(error)
     }
   }
 
@@ -59,14 +61,13 @@ export class MoviesService {
 
   async findOne(id: string) {
     try {
-      const movie = await this.movieRepository.findOne({where:{id, isActive:true}});
-
-      if(!movie)
-        throw new NotFoundException(`Movie with id ${id} not found`)
-
+      const movie = await this.movieRepository.findOne({ where: { id, isActive: true } });
+      if (!movie) {
+        throw new NotFoundException(`Movie with id ${id} not found`);
+      }
       return movie;
     } catch (error) {
-      throw new InternalServerErrorException(error)
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -87,7 +88,7 @@ export class MoviesService {
         message:'Movie was updated'
       };
     } catch (error) {
-      throw new InternalServerErrorException(error)
+      this.errorHandler.handleDBErrors(error)
     }
   }
 
@@ -119,7 +120,7 @@ export class MoviesService {
   async insertStarWarsMovies() {
     try {
       const {data} = await firstValueFrom(
-        this.httpService.get('https://swapi.dev/api/films/')
+        this.httpService.get(process.env.STAR_WARS_API_URL)
       )
       const insertPromises = []
       data.results.forEach(async ({title, opening_crawl}) => {
@@ -127,17 +128,17 @@ export class MoviesService {
         insertPromises.push(this.movieRepository.insert({title:completeTitle, description:opening_crawl}))
       });
       const results = await Promise.all(insertPromises)
-      return results;
+      return {results};
     
   } catch (error) {
-    throw new InternalServerErrorException(error)
+    this.errorHandler.handleDBErrors(error)
   }
   }
 
-  async starWarsMovies(paginationAndSearchDto: PaginationAndSearchDto) {
+  async starWarsMovies() {
     try {
       const {data} = await firstValueFrom(
-        this.httpService.get('https://swapi.dev/api/films/')
+        this.httpService.get(process.env.STAR_WARS_API_URL)
       )
       return data.results;
     
@@ -173,7 +174,7 @@ export class MoviesService {
         genresMovie += ` ${name},`;
       });
 
-      const createMovie:CreateMovieDto={
+      const createMovie:CreateMovieDto = {
         title:data.title,
         description:data.overview,
         releaseDate:data.release_date,
@@ -185,7 +186,7 @@ export class MoviesService {
 
       return movieCreated
     } catch (error) {
-      throw new InternalServerErrorException(error)
+      this.errorHandler.handleDBErrors(error)
     }
   }
 
